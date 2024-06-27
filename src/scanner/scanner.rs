@@ -15,7 +15,7 @@ impl Scanner {
     fn tokenize(word: &str) -> Token {
         match word {
             "fn" => Token::new(TokenType::FuncDef, Some("fn")),
-            "fnend" => Token::new(TokenType::EndFuncDef, Some("fnend")),
+            "endfn" => Token::new(TokenType::EndFuncDef, Some("endfn")),
             "(" => Token::new(TokenType::OpenParenthes, Some("(")),
             ")" => Token::new(TokenType::CloseParenthes, Some(")")),
             "if" => Token::new(TokenType::If, Some("if")),
@@ -25,6 +25,7 @@ impl Scanner {
             "break" => Token::new(TokenType::Break, Some("break")),
             "continue" => Token::new(TokenType::Continue, Some("continue")),
             "endwhile" => Token::new(TokenType::EndWhile, Some("endwhile")),
+            "return" => Token::new(TokenType::Return, Some("return")),
             ":" => Token::new(TokenType::Colon, Some(":")),
             ";" => Token::new(TokenType::Semicolon, Some(";")),
             "," => Token::new(TokenType::Comma, Some(",")),
@@ -61,18 +62,21 @@ impl Scanner {
             if x == '\"' {
                 let mut string_literal = x.to_string();
                 idx += 1;
-                while chars[idx] != '\"' {
+                while idx < chars.iter().len() && chars[idx] != '\"' {
                     if chars[idx] == '\\' {
                         idx += 1;
                         match chars[idx] {
-                            '\"' => { string_literal += "\""; },
-                            'n' => { string_literal += "\n"; },
-                            't' => { string_literal += "\t"; },
-                            '\\' => { string_literal += "\\"; },
-                            c => { string_literal += &c.to_string(); },
+                            '\"' => {
+                                string_literal += "\"";
+                            },
+                            _ => {
+                                string_literal += "\\";
+                                string_literal += &chars[idx].to_string();
+                            },
                         }
+                    } else {
+                        string_literal += &chars[idx].to_string();
                     }
-                    string_literal += &chars[idx].to_string();
                     idx += 1;
                 }
                 string_literal += "\"";
@@ -186,42 +190,59 @@ mod tests {
     
     #[test]
     fn test_scanner_str() {
-        let input = "String: str <- \"Hello\";";
-
+        let input = "
+fn helloWorld()
+    String: str <- \"Hello \\\"World\\\"\";
+    return str;
+endfn
+";
         let scanner = Scanner::new(input);
 
         let tokens = scanner.tokens;
         let expected_tokens = vec![
+            Token::new(TokenType::FuncDef, Some("fn")),
+            Token::new(TokenType::Ident, Some("helloWorld")),
+            Token::new(TokenType::OpenParenthes, Some("(")),
+            Token::new(TokenType::CloseParenthes, Some(")")),
             Token::new(TokenType::StringType, Some("String")),
             Token::new(TokenType::Colon, Some(":")),
             Token::new(TokenType::Ident, Some("str")),
             Token::new(TokenType::Assign, Some("<-")),
-            Token::new(TokenType::String, Some("Hello")),
+            Token::new(TokenType::String, Some("Hello \"World\"")),
             Token::new(TokenType::Semicolon, Some(";")),
+            Token::new(TokenType::Return, Some("return")),
+            Token::new(TokenType::Ident, Some("str")),
+            Token::new(TokenType::Semicolon, Some(";")),
+            Token::new(TokenType::EndFuncDef, Some("endfn")),
         ];
 
-        assert_eq!(tokens, expected_tokens, "expected: {expected_tokens:?}, actual: {tokens:?}");
+        for i in 0..expected_tokens.iter().len() {
+            let act = &tokens[i];
+            let exp = &expected_tokens[i];
+            assert_eq!(tokens[i], expected_tokens[i], "{i:?} th: expected: {exp:?}, actual: {act:?}");
+        }
     }
 
     #[test]
-    fn test_scanner_basic2() {
+    fn test_scanner_fizzbuzz() {
         let input = "
 fn Bool: fizzbuzz(Int: number)
-  Int: i <- 1;
-  /* i が 1 から number までの間繰り返す */
-  while (i <= number) 
-    // i が 3 の倍数かつ 5 の倍数の場合
-    if (i % 15 = 0)
-      println(\"FizzBuzz\");
-    else if (i % 3 = 0)
-      println(\"Fizz\");
-    else if (i % 5 = 0)
-      println(\"Buzz\");
-    else
-      println(i);
-    endif
-    i <- i + 1;
-  endwhile
+    Int: i <- 1;
+    /* i が 1 から number までの間繰り返す */
+    
+    while (i <= number) 
+        // i が 3 の倍数かつ 5 の倍数の場合
+        if (i % 15 = 0)
+            println(\"FizzBuzz\");
+        else if (i % 3 = 0)
+            println(\"Fizz\");
+        else if (i % 5 = 0)
+            println(\"Buzz\");
+        else
+            println(i);
+        endif
+        i <- i + 1;
+    endwhile
 endfn
 ";
         let scanner = Scanner::new(input);

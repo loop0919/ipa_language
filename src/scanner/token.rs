@@ -11,8 +11,8 @@ pub enum TokenType {
     Break,
     Continue,
     EndWhile,
+    Return,
     RelOp,
-
     AddOp,
     MulOp,
     PowOp,

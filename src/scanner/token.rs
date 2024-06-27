@@ -1,10 +1,32 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
+    FuncDef,
+    EndFuncDef,
+    OpenParenthes,
+    CloseParenthes,
+    If,
+    Else,
+    EndIf,
+    While,
+    Break,
+    Continue,
+    EndWhile,
+    RelOp,
+
     AddOp,
     MulOp,
     PowOp,
-    Parenthes,
+    Assign,
+    Colon,
+    Semicolon,
+    Comma,
+    BoolType,
+    Bool,
+    IntType,
     Int,
+    StringType,
+    String,
+    Ident,
 }
 
 #[derive(Debug, Clone, PartialEq)]
